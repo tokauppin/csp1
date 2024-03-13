@@ -1,0 +1,42 @@
+{% extends "polls/base.html" %}
+
+
+{% block title %}
+    register
+{% endblock %}
+    
+{% block content %}
+
+<form method="POST">
+    <!-- {% csrf_token %} -->
+    <div class="form-inputs">
+        <h3>Create an account</h3>
+        <div class="form-input">
+           <input type="text" name="username" placeholder="choose username" /> 
+        </div>
+        
+        <div class="form-input">
+            <input type="email" name="email" placeholder="enter email" />
+        </div>
+
+        <div class="form-input">
+            <input type="password" name="password1" placeholder="enter password" />
+
+        </div>
+
+        <div class="form-input">
+            <input type="password" name="password2" placeholder="confirm password" />
+
+        </div>
+        
+        <button type="submit">Register</button>
+        <a href="{% url 'login' %}">Already have an account?</a>
+
+    </div>
+    
+
+    
+
+</form>
+
+{% endblock %}
