@@ -8,6 +8,57 @@
     
 {% block content %}
 
-<h2>vote blyat</h2>
+<form method="POST">
+
+    <div class="vote-poll">
+
+        <div class="question-title">
+            {{ poll.question }}
+        </div>
+        
+        {% if not poll.user_has_voted %}
+
+        <div class="radio">
+            <label>
+                <input type="radio" name="poll" value="option1">
+                {{ poll.option_one }}
+            </label>
+            <label>
+                <input type="radio" name="poll" value="option2">
+                {{ poll.option_two }}
+            </label>
+            <label>
+                <input type="radio" name="poll" value="option3">
+                {{ poll.option_three }}
+            </label>
+        </div>
+
+    <button type="submit">Vote</button>
+   
+   
+    {% else %}
+
+    <span>You have already voted but you can view the poll results</span>
+    <a href="{% url 'results' poll.id %}">here</a>
+    
+    {% endif %}
+
+    </div>
+    
+    
+    
+
+</form>
+
+
+
+    
+    
+    
+
+
+
+
+
 
 {% endblock %}

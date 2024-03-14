@@ -8,6 +8,33 @@
 
 {% block content %}
 
+<form method="POST">
+    <div class="form-inputs">
+        <h3>What would you like to poll?</h3>
+        <h5>Fields with a * are required</h5>
+        <div class="form-input">
+            <input type="text" maxlength="255" name="question" placeholder="Question *" />
+        </div>
 
+        <div class="form-input">
+            <input type="text" maxlength="200" name="option_one" placeholder="Option 1 *" />
+        </div>
+
+        <div class="form-input">
+            <input type="text" maxlength="200" name="option_two" placeholder="Option 2 *" />
+        </div>
+        
+        <div class="form-input">
+            <input type="text" maxlength="200" name="option_three" placeholder="Option 3 *" />
+        </div>
+        
+
+        
+
+        <button type="submit">Poll</button>
+        
+    </div>
+    
+</form>
 
 {% endblock %}
