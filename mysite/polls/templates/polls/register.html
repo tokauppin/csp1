@@ -2,14 +2,14 @@
 
 
 {% block title %}
-    register
+    Register
 {% endblock %}
     
 {% block content %}
 
 <form method="POST">
-
-    <!-- {% csrf_token %} -->
+    {% csrf_token %}
+    
     <div class="form-inputs">
         <h3>Create an account</h3>
         <div class="form-input">

@@ -1,13 +1,31 @@
 {% extends "polls/base.html" %}
 
-{% load static %}
-
 {% block title %}
-    poll results
+    Poll result
 {% endblock %}
     
 {% block content %}
 
-<h2>results blyat</h2>
+{% csrf_token %}
+
+<div class="results">
+    <h2>Voting results for: " {{ poll.question }} "</h2>
+    <div class="option">
+        {{ poll.option_one }}
+        {{ poll.option_one_votes }}
+        votes
+    </div>
+    <div class="option">
+        {{ poll.option_two }}
+        {{ poll.option_two_votes }}
+        votes
+    </div>
+    <div class="option">
+        {{ poll.option_three }}
+        {{ poll.option_three_votes }}
+        votes
+    </div>
+</div>
+
 
 {% endblock %}

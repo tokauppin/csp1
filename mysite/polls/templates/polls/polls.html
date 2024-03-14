@@ -1,12 +1,13 @@
 {% extends "polls/base.html" %}
 
 {% block title %}
-    create a poll
+    Polls
 {% endblock %}
     
 {% block content %}
 
 <div class="all-polls">
+    {% csrf_token %}
     {% for poll in polls %}
     <li class="poll-list" style="list-style-type: none;">
 
@@ -15,10 +16,13 @@
         {{ poll.question }} 
         
         <a href="{% url 'vote' poll.id %}">Vote</a><br/>
-        {% if request.user == poll.user %}
-        <a href="{% url 'remove-poll' poll.id %}">Remove poll</a>
-        {% endif %}
+
         </h4>
+        <div class="remove-poll">
+            {% if request.user == poll.user %}
+            <a href="{% url 'remove-poll' poll.id %}">Remove poll</a>
+            {% endif %}
+        </div>
        
 
        

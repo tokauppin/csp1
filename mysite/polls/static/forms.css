@@ -14,3 +14,17 @@
     margin-top: 0.5em;
 }
 
+.all-polls {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.remove-poll {
+    margin-top: -1.3em;
+    margin-bottom: 1em;
+    display: flex;   
+    align-items: center;
+    flex-direction: column;
+    
+}

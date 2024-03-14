@@ -21,4 +21,12 @@ body {
     left: 50%;
     transform: translateX(-50%);
 
-} 
+}
+
+.bar {
+
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
