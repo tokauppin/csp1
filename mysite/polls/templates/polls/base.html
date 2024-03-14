@@ -17,7 +17,7 @@
         <h1>Your vote matters</h1>
     </header>    
         <div class="bar">
-            <ul>
+            
                   
                 {% if user.is_authenticated %}
                     <a href="{% url 'home' %}">Home</a> 
@@ -28,7 +28,7 @@
                     <a href="{% url 'login' %}">Login</a>
                     <a href="{% url 'register' %}">Register</a>
                 {% endif %}
-            </ul>
+            
         </div>
 
     

@@ -1,3 +1,5 @@
+/* Base html, Results and vote.html styling */
+
 body {
     background-color: rgb(180, 180, 180);
     display: flex;
@@ -29,4 +31,28 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.bar a {
+    /* text-decoration: none; */
+    color: black;
+    margin-right: 0.5em;
+}
+
+.vote-poll {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    
+}
+
+.question-title {
+    margin-top: 3em;
+    margin-bottom: 3em;
+}
+
+.results {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
 }
