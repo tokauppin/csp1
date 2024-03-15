@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from .forms import CustomUserCreationForm, CreatePollForm
-from .models import Poll
+from .models import Poll, Vote
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.csrf import csrf_exempt
 
@@ -58,6 +58,20 @@ def results_view(request, poll_id):
     return render(request, 'polls/results.html', context)
 
 
+def user_has_voted(request, poll_id) -> bool:
+    '''
+    Checks if a user has voted on the poll in question
+    '''
+
+    user = request.user
+    poll = get_object_or_404(Poll, pk=poll_id)
+    has_voted = Vote.objects.filter(user=user, poll=poll).exists()
+
+    if has_voted:
+        return True
+    
+    return False
+
 @csrf_protect
 @login_required(login_url='login')
 def vote_view(request, poll_id):
@@ -66,15 +80,20 @@ def vote_view(request, poll_id):
     Function keeps track if a user has voted for the poll in question.
     Users can only vote once per poll
     '''
-    
+    user = request.user
     poll = Poll.objects.get(pk=poll_id)
     context =  {
         'poll': poll ,
-        'has_voted': poll.user_has_voted,
+        'has_voted': False,
     }
     
     #check the status if user voted
-    if poll.user_has_voted:
+    if user_has_voted(request, poll_id):
+            print('user has voted')
+            context =  {
+            'poll': poll ,
+            'has_voted': True,
+            }
             return render(request, 'polls/vote.html', context)
 
     if request.method == 'POST':
@@ -88,8 +107,8 @@ def vote_view(request, poll_id):
         
         if vote == 'option3':
             poll.option_three_votes += 1
-
-        poll.user_has_voted = True 
+        
+        Vote.objects.get_or_create(user=user, poll=poll) # create an entry that a user has voted for a poll
         poll.save() #save the vote for poll and voting status for user
         
         return redirect('results', poll_id=poll_id)
