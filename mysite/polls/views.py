@@ -33,7 +33,7 @@ def home_view(request):
 def polls_view(request):
     '''
     Users can see and vote for existing polls
-    Users can remove their own polls
+    Users can remove their own polls (see remove_poll)
     '''
     polls = Poll.objects.all()
     context = {'polls': polls}
@@ -58,7 +58,7 @@ def results_view(request, poll_id):
     return render(request, 'polls/results.html', context)
 
 
-def user_has_voted(request, poll_id) -> bool:
+def user_has_voted(request : HttpResponse, poll_id : int) -> bool:
     '''
     Checks if a user has voted on the poll in question
     '''
@@ -86,15 +86,13 @@ def vote_view(request, poll_id):
         'poll': poll ,
         'has_voted': False,
     }
-    
     #check the status if user voted
-    if user_has_voted(request, poll_id):
-            print('user has voted')
+    if user_has_voted(request, poll.id):
             context =  {
             'poll': poll ,
             'has_voted': True,
             }
-            return render(request, 'polls/vote.html', context)
+            return render(request, 'polls/vote.html', context) # return true to vote page if user has voted
 
     if request.method == 'POST':
         vote = request.POST['poll']
@@ -115,21 +113,6 @@ def vote_view(request, poll_id):
 
     return render(request, 'polls/vote.html', context)
 
-@csrf_protect
-def login_view(request):
-    '''
-    Logs in a user if the credentials match with a user in database
-    '''
-    if request.method == 'POST':
-        username = request.POST['username']
-        pwd = request.POST['password']
-        user = authenticate(request, username=username, password=pwd)
-        
-        if user is not None:
-            login(request, user)
-            return redirect('home')
-
-    return render(request, 'polls/login.html')
 
 @csrf_protect
 def register_view(request):
@@ -145,6 +128,22 @@ def register_view(request):
             return redirect('login')
 
     return render(request, 'polls/register.html')
+
+@csrf_protect
+def login_view(request):
+    '''
+    Logs in a user if the credentials match with a user in database
+    '''
+    if request.method == 'POST':
+        username = request.POST['username']
+        pwd = request.POST['password']
+        user = authenticate(request, username=username, password=pwd)
+        
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+
+    return render(request, 'polls/login.html')
 
 @csrf_protect
 @login_required(login_url='login')
@@ -171,6 +170,42 @@ def remove_poll(request, poll_id):
     return redirect('polls')
 
 
+def verify_login(request):
+
+
+
+
+
+    return redirect('')
 # csrf protection
 # page restriction
 
+from django.db import connection
+
+#SELECT * FROM poll WHERE id = '0'; DELETE FROM poll; --'
+''''
+testing sql injection for insecure design
+'''
+def search_poll(request):
+    # Get the user can search for a poll by its id
+    user_input = request.GET.get("search_id")
+
+    with connection.cursor() as cursor:
+        #find any polls with the id
+        query = f"SELECT * FROM polls_poll WHERE question LIKE '%{user_input}%'"
+
+        # query = f"SELECT * FROM polls_poll WHERE id = '{user_input}'"
+        cursor.execute(query)
+        # results = cursor.fetchall()
+        # print(results)
+    # Process results and return response
+        rows = cursor.fetchall()
+
+    # Assuming your Poll model has these fields
+    polls = [{'id': row[0], 'question': row[1], 'option_one': row[2], 'option_two': row[3],
+              'option_three': row[4], 'option_one_votes': row[5], 'option_two_votes': row[6],
+              'option_three_votes': row[7]} for row in rows]
+    print(polls)
+
+    context = {'polls': polls}
+    return render(request, 'polls/search.html', context)

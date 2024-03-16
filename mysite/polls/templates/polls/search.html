@@ -1,0 +1,33 @@
+{% extends "polls/base.html" %}
+
+
+
+{% block title %}
+    Search polls
+{% endblock %}
+
+{% block content %}
+
+
+
+    <!-- search.html -->
+<form action="{% url 'search' %}" method="get">
+    <label for="search_id">Search Poll ID:</label>
+    <input type="text" id="search_id" name="search_id" required>
+    <button type="submit">Search</button>
+</form>
+
+
+{% for poll in polls %}
+
+
+
+    <div>
+        <h2>{{ poll.question }}</h2>
+        <p>Option 1: {{ poll.option_one }} - Votes: {{ poll.option_one_votes }}</p>
+        <p>Option 2: {{ poll.option_two }} - Votes: {{ poll.option_two_votes }}</p>
+        <p>Option 3: {{ poll.option_three }} - Votes: {{ poll.option_three_votes }}</p>
+    </div>
+{% endfor %}
+
+{% endblock %}
