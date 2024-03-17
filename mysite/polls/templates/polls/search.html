@@ -23,10 +23,12 @@
 
 
     <div>
-        <h2>{{ poll.question }}</h2>
+        <h2>{{ poll.question }} ID: {{poll.id}} </h2>
+
         <p>Option 1: {{ poll.option_one }} - Votes: {{ poll.option_one_votes }}</p>
         <p>Option 2: {{ poll.option_two }} - Votes: {{ poll.option_two_votes }}</p>
         <p>Option 3: {{ poll.option_three }} - Votes: {{ poll.option_three_votes }}</p>
+        <a href="{% url 'vote' poll.id %}">Vote</a><br/>
     </div>
 {% endfor %}
 

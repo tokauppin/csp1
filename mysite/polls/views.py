@@ -171,20 +171,23 @@ def remove_poll(request, poll_id):
 
 
 def verify_login(request):
-
+    '''
+    Generate a one time code to login a user that has provided correct credentials
+    '''
 
 
 
 
     return redirect('')
-# csrf protection
-# page restriction
 
 from django.db import connection
 
-#SELECT * FROM poll WHERE id = '0'; DELETE FROM poll; --'
+
 ''''
 testing sql injection for insecure design
+EDIT: to vote in a poll you must find a poll by its unique id
+-> sql injection 1 or 1=1 to see all polls and then vote in polls you are not
+supposed to vote in
 '''
 def search_poll(request):
     # Get the user can search for a poll by its id
@@ -192,16 +195,13 @@ def search_poll(request):
 
     with connection.cursor() as cursor:
         #find any polls with the id
-        query = f"SELECT * FROM polls_poll WHERE question LIKE '%{user_input}%'"
+        query = "SELECT * FROM polls_poll WHERE id = '{}'".format(user_input)
 
-        # query = f"SELECT * FROM polls_poll WHERE id = '{user_input}'"
+        print(query)
         cursor.execute(query)
-        # results = cursor.fetchall()
-        # print(results)
-    # Process results and return response
+        connection.commit()
         rows = cursor.fetchall()
 
-    # Assuming your Poll model has these fields
     polls = [{'id': row[0], 'question': row[1], 'option_one': row[2], 'option_two': row[3],
               'option_three': row[4], 'option_one_votes': row[5], 'option_two_votes': row[6],
               'option_three_votes': row[7]} for row in rows]
