@@ -4,10 +4,23 @@ from .forms import CustomUserCreationForm, CreatePollForm
 from .models import Poll, Vote
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.csrf import csrf_exempt
+import random
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
+
+def generate_poll_id(request) -> int:
+    '''Generates a unique, random 8-digit id for a poll'''
+    id = random.randint(10_000_000, 99_999_999)
+
+    print('this is generated id:', id)
+    for poll in Poll.objects.all():
+        print(poll.id)
+        if poll.id == id:
+            generate_poll_id(request)
+
+    return id
 
 @csrf_protect
 @login_required(login_url='login')
@@ -16,6 +29,7 @@ def home_view(request):
     Users can create polls with this.
     Takes the form inputs from home.html.
     The function binds the created poll to the authenticated user
+    A random unique 8-digit id is generated for the poll 
     '''
     if request.method == 'POST':
         form = CreatePollForm(request.POST)
@@ -23,7 +37,8 @@ def home_view(request):
         if form.is_valid():
             poll = form.save(commit=False)
             poll.user = request.user
-            poll.save()            
+            poll.id = generate_poll_id(request)        
+            poll.save()    
             return redirect('polls') # redirect to polls page after creating a poll
 
     return render(request, 'polls/home.html')
@@ -86,6 +101,7 @@ def vote_view(request, poll_id):
         'poll': poll ,
         'has_voted': False,
     }
+    print('this is poll_id:', poll_id)
     #check the status if user voted
     if user_has_voted(request, poll.id):
             context =  {
