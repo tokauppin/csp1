@@ -11,6 +11,7 @@
 <form method="POST">
     {% csrf_token %}
     <div class="form-inputs">
+        <h1>Create a poll that anyone can vote in!</h1>
         <h3>What would you like to poll?</h3>
         <h5>Fields with a * are required</h5>
         <div class="form-input">
@@ -30,7 +31,9 @@
         </div>
 
         <button type="submit">Create poll</button>
-        
+        <div><p>Your poll will have a unique ID and users can search for polls by their ID.
+            Anyone can vote in your poll with this ID so keep it secret from the public
+        </p></div>
     </div>
     
 </form>

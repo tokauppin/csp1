@@ -157,6 +157,7 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
+            #otc logic here or redirect to otc page that redirects to home or login depending on success 
             return redirect('home')
 
     return render(request, 'polls/login.html')
@@ -186,34 +187,34 @@ def remove_poll(request, poll_id):
     return redirect('polls')
 
 
-def verify_login(request):
+def verify_login(request)-> int:
     '''
     Generate a one time code to login a user that has provided correct credentials
+    Returns the code for now, might add it so that this function does the verif logic too
+    '''
+    # one-time code for the user
+    # would be used with a 2FA app or via email, in this case just print the code
+    otc = random.randint(10000, 99999)
+
+    return otc
+
+
+# This is sql injectable and should not be used in the correct version
+from django.db import connection
+def search_poll(request): #insecure example
+    '''
+    The function returns the search result of an ID that a user provides
+    It returns a poll with a matching id or no poll at all
+    Any user can search for a poll and vote for it
     '''
 
-
-
-
-    return redirect('')
-
-from django.db import connection
-
-
-''''
-testing sql injection for insecure design
-EDIT: to vote in a poll you must find a poll by its unique id
--> sql injection 1 or 1=1 to see all polls and then vote in polls you are not
-supposed to vote in
-'''
-def search_poll(request):
-    # Get the user can search for a poll by its id
     user_input = request.GET.get("search_id")
 
     with connection.cursor() as cursor:
-        #find any polls with the id
+        
+        #query the user input to find a matching poll
         query = "SELECT * FROM polls_poll WHERE id = '{}'".format(user_input)
 
-        print(query)
         cursor.execute(query)
         connection.commit()
         rows = cursor.fetchall()
@@ -221,7 +222,38 @@ def search_poll(request):
     polls = [{'id': row[0], 'question': row[1], 'option_one': row[2], 'option_two': row[3],
               'option_three': row[4], 'option_one_votes': row[5], 'option_two_votes': row[6],
               'option_three_votes': row[7]} for row in rows]
-    print(polls)
 
     context = {'polls': polls}
     return render(request, 'polls/search.html', context)
+
+
+
+@csrf_exempt
+def bad_vote_view(request, poll_id):
+    '''
+    Registers a user vote for a poll
+    No login needed to vote 
+    '''
+    poll = Poll.objects.get(pk=poll_id)
+    context =  {
+        'poll': poll ,
+        
+    }
+
+    if request.method == 'POST':
+        vote = request.POST['poll']
+            
+        if vote == 'option1': 
+            poll.option_one_votes += 1 
+            
+        if vote == 'option2':
+            poll.option_two_votes += 1
+        
+        if vote == 'option3':
+            poll.option_three_votes += 1
+        
+        poll.save() #save the vote for the poll
+        
+        return redirect('results', poll_id=poll_id)
+
+    return render(request, 'polls/vote.html', context) #create a bad_vote.html and use it

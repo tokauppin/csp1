@@ -6,24 +6,33 @@
     
 {% block content %}
 
+<!-- This page shows polls that a user has created.  
+A user can remove polls that they have created or view the poll results.
+-->
+
 <div class="all-polls">
     {% csrf_token %}
     {% for poll in polls %}
     <li class="poll-list" style="list-style-type: none;">
-
+    {% if request.user == poll.user %}
        <h4>
 
-        {{ poll.question }} 
+        {{ poll.question }} - Poll ID: {{ poll.id }}
         
-        <a href="{% url 'vote' poll.id %}">Vote</a><br/>
+        <!-- <a href="{% url 'vote' poll.id %}">Vote</a><br/> -->
 
         </h4>
         <div class="remove-poll">
-            {% if request.user == poll.user %}
+            Options:
+            {{ poll.option_one }}, {{ poll.option_two }}, {{ poll.option_three }}
+            <div></div>
+            <a href="{% url 'results' poll.id %}">Poll results</a>
+            <div>Done with the poll?</div>
+            
             <a href="{% url 'remove-poll' poll.id %}">Remove poll</a>
-            {% endif %}
+           
         </div>
-       
+        {% endif %}
 
        
     </li>

@@ -10,9 +10,11 @@
 
 
 
-    <!-- search.html -->
+    <!-- Users can here search for a poll and vote in that poll. Polls are searched
+    by their unique poll ids-->
+    <h3>What are we voting for?</h3>
 <form action="{% url 'search' %}" method="get">
-    <label for="search_id">Search Poll ID:</label>
+    <label for="search_id">Search Poll by ID:</label>
     <input type="text" id="search_id" name="search_id" required>
     <button type="submit">Search</button>
 </form>
@@ -25,9 +27,9 @@
     <div>
         <h2>{{ poll.question }} ID: {{poll.id}} </h2>
 
-        <p>Option 1: {{ poll.option_one }} - Votes: {{ poll.option_one_votes }}</p>
+        <!-- <p>Option 1: {{ poll.option_one }} - Votes: {{ poll.option_one_votes }}</p>
         <p>Option 2: {{ poll.option_two }} - Votes: {{ poll.option_two_votes }}</p>
-        <p>Option 3: {{ poll.option_three }} - Votes: {{ poll.option_three_votes }}</p>
+        <p>Option 3: {{ poll.option_three }} - Votes: {{ poll.option_three_votes }}</p> -->
         <a href="{% url 'vote' poll.id %}">Vote</a><br/>
     </div>
 {% endfor %}
