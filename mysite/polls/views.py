@@ -1,14 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from .forms import CustomUserCreationForm, CreatePollForm
-from .models import Poll, Vote
+from .models import Poll, Vote, CustomUser
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.csrf import csrf_exempt
-import random
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
+
+import random
+import pyotp
+from datetime import datetime, timedelta
 
 def generate_poll_id(request) -> int:
     '''Generates a unique, random 8-digit id for a poll'''
@@ -31,6 +34,15 @@ def home_view(request):
     The function binds the created poll to the authenticated user
     A random unique 8-digit id is generated for the poll 
     '''
+
+    try:
+
+        if request.session['username']:
+            #delete the extra session created
+            del request.session['username']
+
+    except KeyError:
+        pass
     if request.method == 'POST':
         form = CreatePollForm(request.POST)
 
@@ -135,6 +147,9 @@ def register_view(request):
     '''
     Register a user if form data is valid
     '''
+    #redirect users if they are already logged in
+    if request.user.is_authenticated:
+        return redirect('home')
 
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -148,17 +163,24 @@ def register_view(request):
 @csrf_protect
 def login_view(request):
     '''
-    Logs in a user if the credentials match with a user in database
+    If credentials matches, the user will be directed to a login verification
+    page where a one time code needs to be provided in order to login
     '''
+    #redirect users if they are already logged in
+    if request.user.is_authenticated:
+        return redirect('home')
+    
     if request.method == 'POST':
         username = request.POST['username']
         pwd = request.POST['password']
         user = authenticate(request, username=username, password=pwd)
         
         if user is not None:
-            login(request, user)
-            #otc logic here or redirect to otc page that redirects to home or login depending on success 
-            return redirect('home')
+            generate_verification_code(request)
+            request.session['username'] = username
+            return redirect('verify')
+            # login(request, user)
+            # return redirect('home')
 
     return render(request, 'polls/login.html')
 
@@ -187,16 +209,66 @@ def remove_poll(request, poll_id):
     return redirect('polls')
 
 
-def verify_login(request)-> int:
+def generate_verification_code(request):
     '''
-    Generate a one time code to login a user that has provided correct credentials
-    Returns the code for now, might add it so that this function does the verif logic too
+    Generates a one time code OTC that is valid for x seconds defined in the interval
+    Assigns the secret key and time created to the request session
     '''
-    # one-time code for the user
-    # would be used with a 2FA app or via email, in this case just print the code
-    otc = random.randint(10000, 99999)
+    totp = pyotp.TOTP(pyotp.random_base32(), interval=60) #code is valid for 60s
+    otc = totp.now()
+    request.session['otc_secret_key'] = totp.secret
+    valid_until = datetime.now() + timedelta(minutes=1)
+    request.session['otc_valid_until'] = str(valid_until) 
 
-    return otc
+    # would be used with a 2FA app or via email, in this case just print the code
+    print(f'Your verification code: {otc} ')
+
+def verify_login(request):
+    '''
+    verify the login of a user with a one time code generated in 'generate_verification_code'
+    '''
+    err_msg = None
+    if request.method == 'POST':
+        otc = request.POST['otc']
+        try:
+            username = request.session['username']
+            otc_secret_key = request.session['otc_secret_key']
+            otc_valid_until = request.session['otc_valid_until']
+        except KeyError:
+            err_msg = 'Enter your login credentials in the login page first'
+            return render(request, 'polls/verifylogin.html', {'err_msg': err_msg})
+        
+
+        if otc_secret_key and otc_valid_until is not None:
+            valid_until = datetime.fromisoformat(otc_valid_until)
+            
+            if valid_until > datetime.now():
+                # the time interval has not exceeded the current time yet
+
+                totp = pyotp.TOTP(otc_secret_key, interval=60)
+                if totp.verify(otc): # check if user input matches with the generated code
+                    user = get_object_or_404(CustomUser, username=username)
+                    if user is None:
+                        err_msg = 'There was an error verifying the user'
+                        return render(request, 'polls/verifylogin.html', {'err_msg': err_msg})
+                    
+                    login(request, user)
+
+                    del request.session['otc_secret_key']
+                    del request.session['otc_valid_until']
+
+                    return redirect('home')
+                
+                else:
+                    err_msg = 'Wrong verification code'
+            else:
+                err_msg = 'You verification code has expired'
+
+        else:
+            err_msg = 'There was an error generating the verification code or session'
+
+
+    return render(request, 'polls/verifylogin.html', {'err_msg': err_msg})
 
 
 # This is sql injectable and should not be used in the correct version

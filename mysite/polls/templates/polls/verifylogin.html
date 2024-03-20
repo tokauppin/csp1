@@ -1,0 +1,32 @@
+{% extends "polls/base.html" %}
+
+{% block title %}
+    Verify login
+{% endblock %}
+    
+{% block content %}
+
+<!-- This page handles the 2-step verification of logging in a user -->
+
+
+<form method="POST">
+    {% csrf_token %}
+    <div class="form-inputs">
+        <h3>Verify your login</h3>
+        {% if code_sent %}
+        <p>A one time verification code has been sent to you. The code is valid for 60 seconds</p>
+        {% endif %}
+        <div class="form-input">
+           <input type="text" name="otc" placeholder="One time code" /> 
+
+        </div>
+        {% if err_msg %}
+        <p> {{ err_msg }} </p>
+        {% endif %}
+        <button type="submit">Login</button>
+    </div>
+
+{% endblock %}
+
+
+
