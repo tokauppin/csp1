@@ -69,7 +69,6 @@ def polls_view(request):
 
 
 @csrf_protect
-@login_required(login_url='login')
 def results_view(request, poll_id):
     '''
     Shows the voting result for selected poll.
@@ -87,25 +86,33 @@ def results_view(request, poll_id):
 
 def user_has_voted(request : HttpResponse, poll_id : int) -> bool:
     '''
-    Checks if a user has voted on the poll in question
+    Checks if a user has voted on the poll in question using sessions
+    Function keeps track if a user has voted for the poll in question.
+    Users can only vote once per poll
     '''
 
-    user = request.user
-    poll = get_object_or_404(Poll, pk=poll_id)
-    has_voted = Vote.objects.filter(user=user, poll=poll).exists()
-
-    if has_voted:
+    
+    if request.session.get(f'has_voted_{poll_id}', False):
         return True
     
     return False
 
+    #This checks for logged in users if they have voted
+    # user = request.user
+    # poll = get_object_or_404(Poll, pk=poll_id)
+    # has_voted = Vote.objects.filter(user=user, poll=poll).exists()
+
+    # if has_voted:
+    #     return True
+    
+    # return False
+
 @csrf_protect
-@login_required(login_url='login')
+# @login_required(login_url='login')
 def vote_view(request, poll_id):
     '''
     A vote view for selected poll
-    Function keeps track if a user has voted for the poll in question.
-    Users can only vote once per poll
+
     '''
     user = request.user
     poll = Poll.objects.get(pk=poll_id)
@@ -133,8 +140,8 @@ def vote_view(request, poll_id):
         
         if vote == 'option3':
             poll.option_three_votes += 1
-        
-        Vote.objects.get_or_create(user=user, poll=poll) # create an entry that a user has voted for a poll
+        request.session[f'has_voted_{poll_id}'] = True
+        # Vote.objects.get_or_create(user=user, poll=poll) # create an entry that a user has voted for a poll
         poll.save() #save the vote for poll and voting status for user
         
         return redirect('results', poll_id=poll_id)
@@ -300,32 +307,32 @@ def search_poll(request): #insecure example
 
 
 
-@csrf_exempt
-def bad_vote_view(request, poll_id):
-    '''
-    Registers a user vote for a poll
-    No login needed to vote 
-    '''
-    poll = Poll.objects.get(pk=poll_id)
-    context =  {
-        'poll': poll ,
+# @csrf_exempt
+# def bad_vote_view(request, poll_id):
+#     '''
+#     Registers a user vote for a poll
+#     No login needed to vote 
+#     '''
+#     poll = Poll.objects.get(pk=poll_id)
+#     context =  {
+#         'poll': poll ,
         
-    }
+#     }
 
-    if request.method == 'POST':
-        vote = request.POST['poll']
+#     if request.method == 'POST':
+#         vote = request.POST['poll']
             
-        if vote == 'option1': 
-            poll.option_one_votes += 1 
+#         if vote == 'option1': 
+#             poll.option_one_votes += 1 
             
-        if vote == 'option2':
-            poll.option_two_votes += 1
+#         if vote == 'option2':
+#             poll.option_two_votes += 1
         
-        if vote == 'option3':
-            poll.option_three_votes += 1
+#         if vote == 'option3':
+#             poll.option_three_votes += 1
         
-        poll.save() #save the vote for the poll
+#         poll.save() #save the vote for the poll
         
-        return redirect('results', poll_id=poll_id)
+#         return redirect('results', poll_id=poll_id)
 
-    return render(request, 'polls/vote.html', context) #create a bad_vote.html and use it
+#     return render(request, 'polls/vote.html', context) #create a bad_vote.html and use it
