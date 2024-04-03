@@ -8,6 +8,22 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
+
+
+This project is created with 5.0.1 as mentioned above.
+If we were to make this project vulnerable, we would need to install a vulnerable version,
+like 4.2.1 , that has a DoS vulnerability in the django.utils.encoding.uri_to_iri() funciton.
+To do this, we need to use `-m pip install django==4.2.1` to install the vulnerable version
+and start the project with `django-admin startproject` command
+Sources: 
+https://security.snyk.io/package/pip/django/4.2.1
+https://www.djangoproject.com/download/
+
+For more information on this file, see
+https://docs.djangoproject.com/en/4.2/topics/settings/
+
+For the full list of settings and their values, see
+https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path

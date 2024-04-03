@@ -11,15 +11,14 @@ A user can remove polls that they have created or view the poll results.
 -->
 
 <div class="all-polls">
-    {% csrf_token %}
+    <!-- {% csrf_token %} -->
     {% for poll in polls %}
     <li class="poll-list" style="list-style-type: none;">
-    {% if request.user == poll.user %}
+    
        <h4>
 
         {{ poll.question }} - Poll ID: {{ poll.id }}
         
-        <!-- <a href="{% url 'vote' poll.id %}">Vote</a><br/> -->
 
         </h4>
         <div class="remove-poll">
@@ -32,7 +31,7 @@ A user can remove polls that they have created or view the poll results.
             <a href="{% url 'remove-poll' poll.id %}">Remove poll</a>
            
         </div>
-        {% endif %}
+       
 
        
     </li>

@@ -4,10 +4,9 @@ from .forms import CustomUserCreationForm, CreatePollForm
 from .models import Poll, Vote, CustomUser
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.csrf import csrf_exempt
-
+from django.db import connection
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-
 
 import random
 import pyotp
@@ -17,15 +16,14 @@ def generate_poll_id(request) -> int:
     '''Generates a unique, random 8-digit id for a poll'''
     id = random.randint(10_000_000, 99_999_999)
 
-    print('this is generated id:', id)
     for poll in Poll.objects.all():
-        print(poll.id)
         if poll.id == id:
             generate_poll_id(request)
 
     return id
 
-@csrf_protect
+#we need to replace all functions that have @csrf_exempt with @csrf_protect
+@csrf_exempt
 @login_required(login_url='login')
 def home_view(request):
     '''
@@ -55,20 +53,23 @@ def home_view(request):
 
     return render(request, 'polls/home.html')
 
-@csrf_protect
+@csrf_exempt
 @login_required(login_url='login')
 def polls_view(request):
     '''
     Users can see and vote for existing polls
     Users can remove their own polls (see remove_poll)
     '''
-    polls = Poll.objects.all()
-    context = {'polls': polls}
 
+    # polls = Poll.objects.filter(user=request.user) #returns only the polls of the authenticated user
+    polls = Poll.objects.all() #remove this
+
+    context = {'polls': polls}
+    
     return render(request, 'polls/polls.html', context)
 
 
-@csrf_protect
+@csrf_exempt
 def results_view(request, poll_id):
     '''
     Shows the voting result for selected poll.
@@ -84,7 +85,7 @@ def results_view(request, poll_id):
     return render(request, 'polls/results.html', context)
 
 
-def user_has_voted(request : HttpResponse, poll_id : int) -> bool:
+def user_has_voted(request, poll_id) -> bool:
     '''
     Checks if a user has voted on the poll in question using sessions
     Function keeps track if a user has voted for the poll in question.
@@ -97,7 +98,7 @@ def user_has_voted(request : HttpResponse, poll_id : int) -> bool:
     
     return False
 
-    #This checks for logged in users if they have voted
+    #This checks for authenticated users if they have voted
     # user = request.user
     # poll = get_object_or_404(Poll, pk=poll_id)
     # has_voted = Vote.objects.filter(user=user, poll=poll).exists()
@@ -107,7 +108,7 @@ def user_has_voted(request : HttpResponse, poll_id : int) -> bool:
     
     # return False
 
-@csrf_protect
+@csrf_exempt
 # @login_required(login_url='login')
 def vote_view(request, poll_id):
     '''
@@ -120,14 +121,14 @@ def vote_view(request, poll_id):
         'poll': poll ,
         'has_voted': False,
     }
-    print('this is poll_id:', poll_id)
+    
     #check the status if user voted
-    if user_has_voted(request, poll.id):
-            context =  {
-            'poll': poll ,
-            'has_voted': True,
-            }
-            return render(request, 'polls/vote.html', context) # return true to vote page if user has voted
+    # if user_has_voted(request, poll.id): #un-commenting this will enable the check if a user has voted
+    #         context =  {
+    #         'poll': poll ,
+    #         'has_voted': True,
+    #         }
+    #         return render(request, 'polls/vote.html', context) # return true to vote page if user has voted
 
     if request.method == 'POST':
         vote = request.POST['poll']
@@ -140,8 +141,9 @@ def vote_view(request, poll_id):
         
         if vote == 'option3':
             poll.option_three_votes += 1
-        request.session[f'has_voted_{poll_id}'] = True
-        # Vote.objects.get_or_create(user=user, poll=poll) # create an entry that a user has voted for a poll
+
+        # request.session[f'has_voted_{poll_id}'] = True #marks that the current user session has voted
+        # Vote.objects.get_or_create(user=user, poll=poll) # create an entry that an authenticated user has voted for a poll
         poll.save() #save the vote for poll and voting status for user
         
         return redirect('results', poll_id=poll_id)
@@ -149,7 +151,7 @@ def vote_view(request, poll_id):
     return render(request, 'polls/vote.html', context)
 
 
-@csrf_protect
+@csrf_exempt
 def register_view(request):
     '''
     Register a user if form data is valid
@@ -167,7 +169,7 @@ def register_view(request):
 
     return render(request, 'polls/register.html')
 
-@csrf_protect
+@csrf_exempt
 def login_view(request):
     '''
     If credentials matches, the user will be directed to a login verification
@@ -183,15 +185,14 @@ def login_view(request):
         user = authenticate(request, username=username, password=pwd)
         
         if user is not None:
+            # create the 2FA code and redirect to the verification page
             generate_verification_code(request)
             request.session['username'] = username
             return redirect('verify')
-            # login(request, user)
-            # return redirect('home')
 
     return render(request, 'polls/login.html')
 
-@csrf_protect
+@csrf_exempt
 @login_required(login_url='login')
 def logout_view(request):
     '''
@@ -207,7 +208,7 @@ def remove_poll(request, poll_id):
     ''' 
     Removes a poll from the polls list
     Users can only delete their own polls
-    The ownership of the poll is checked in polls.html
+    The ownership of the poll is checked in polls_view
     '''
     
     poll = Poll.objects.get(pk=poll_id)
@@ -230,6 +231,7 @@ def generate_verification_code(request):
     # would be used with a 2FA app or via email, in this case just print the code
     print(f'Your verification code: {otc} ')
 
+@csrf_exempt
 def verify_login(request):
     '''
     verify the login of a user with a one time code generated in 'generate_verification_code'
@@ -278,9 +280,8 @@ def verify_login(request):
     return render(request, 'polls/verifylogin.html', {'err_msg': err_msg})
 
 
-# This is sql injectable and should not be used in the correct version
-from django.db import connection
-def search_poll(request): #insecure example
+# sql injectable 
+def search_poll(request): #insecure example, replace this function
     '''
     The function returns the search result of an ID that a user provides
     It returns a poll with a matching id or no poll at all
@@ -306,33 +307,27 @@ def search_poll(request): #insecure example
     return render(request, 'polls/search.html', context)
 
 
-
-# @csrf_exempt
-# def bad_vote_view(request, poll_id):
+#safe query
+# def search_poll(request): #use this function instead
 #     '''
-#     Registers a user vote for a poll
-#     No login needed to vote 
+#     The function returns the search result of an ID that a user provides
+#     It returns a poll with a matching id or no poll at all
+#     Any user can search for a poll and vote for it
 #     '''
-#     poll = Poll.objects.get(pk=poll_id)
-#     context =  {
-#         'poll': poll ,
-        
-#     }
 
-#     if request.method == 'POST':
-#         vote = request.POST['poll']
-            
-#         if vote == 'option1': 
-#             poll.option_one_votes += 1 
-            
-#         if vote == 'option2':
-#             poll.option_two_votes += 1
-        
-#         if vote == 'option3':
-#             poll.option_three_votes += 1
-        
-#         poll.save() #save the vote for the poll
-        
-#         return redirect('results', poll_id=poll_id)
+#     user_input = request.GET.get("search_id")
 
-#     return render(request, 'polls/vote.html', context) #create a bad_vote.html and use it
+#     with connection.cursor() as cursor:
+        
+#         # Using parameterized query to prevent SQL injection
+#         query = "SELECT * FROM polls_poll WHERE id = %s"
+#         cursor.execute(query, [user_input])
+        
+#         rows = cursor.fetchall()
+
+#     polls = [{'id': row[0], 'question': row[1], 'option_one': row[2], 'option_two': row[3],
+#               'option_three': row[4], 'option_one_votes': row[5], 'option_two_votes': row[6],
+#               'option_three_votes': row[7]} for row in rows]
+
+#     context = {'polls': polls}
+#     return render(request, 'polls/search.html', context)
